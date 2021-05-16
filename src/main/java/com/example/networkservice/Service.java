@@ -1,9 +1,14 @@
 package com.example.networkservice;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
@@ -16,7 +21,15 @@ public class Service extends android.app.Service {
     protected static final int NOTIFICATION_ID = 1337;
     private static String TAG = "Service";
     private static Service mCurrentService;
-    private int counter = 0;
+    private TimerTask timertask;
+
+    private SharedPreferences mPreferences;
+    private String sharedPrefFile = "com.example.networkservice";
+    private String RESPONSE_KEY = "response";
+    public static String responseString = "";
+    private int count = 0;
+
+    public static String pingResult = null;
 
     public Service() {
         super();
@@ -30,13 +43,17 @@ public class Service extends android.app.Service {
             restartForeground();
         }
         mCurrentService = this;
+
+        mPreferences = getSharedPreferences(sharedPrefFile, MODE_PRIVATE);
+
+        responseString = mPreferences.getString(RESPONSE_KEY,"");
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
         Log.d(TAG, "restarting Service !!");
-        counter = 0;
+
 
         // it has been killed by Android and now it is restarted. We must make sure to have reinitialised everything
         if (intent == null) {
@@ -50,10 +67,55 @@ public class Service extends android.app.Service {
             restartForeground();
         }
 
-        startTimer();
+        ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+
+        try{
+            if(networkInfo != null && networkInfo.isConnected())
+            {
+                startAsync();
+            }
+            else
+            {
+                count++;
+                if(count <= 3)
+                {
+                    for(int i=0; i<count; i++)
+                    {
+                        saveResponse();
+                    }
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
 
         // return start sticky so if it is killed by android, it will be restarted with Intent null
         return START_STICKY;
+
+    }
+
+    public void startAsync(){
+        Timer timer = new Timer();
+        initializeTimerTask();
+        timer.schedule(timertask,100,600);
+    }
+
+    public void initializeTimerTask() {
+
+        timertask = new TimerTask() {
+            @Override
+            public void run() {
+
+                new FetchUri().execute();
+            }
+        };
+    }
+
+    public void saveResponse(){
+        SharedPreferences.Editor preferencesEditor = mPreferences.edit();
+        preferencesEditor.putString(RESPONSE_KEY,responseString);
+        preferencesEditor.apply();
     }
 
 
@@ -79,7 +141,7 @@ public class Service extends android.app.Service {
                 Notification notification = new Notification();
                 startForeground(NOTIFICATION_ID, notification.setNotification(this, "Service notification", "This is the service's notification", R.drawable.ic_sleep));
                 Log.i(TAG, "restarting foreground successful");
-                startTimer();
+                new FetchUri().execute();
             } catch (Exception e) {
                 Log.e(TAG, "Error in notification " + e.getMessage());
             }
@@ -94,7 +156,7 @@ public class Service extends android.app.Service {
         // restart the never ending service
         Intent broadcastIntent = new Intent(Globals.RESTART_INTENT);
         sendBroadcast(broadcastIntent);
-        stoptimertask();
+        new FetchUri().execute();
     }
 
 
@@ -117,51 +179,6 @@ public class Service extends android.app.Service {
         // stoptimertask();
     }
 
-
-    /**
-     * static to avoid multiple timers to be created when the service is called several times
-     */
-    private static Timer timer;
-    private static TimerTask timerTask;
-    long oldTime = 0;
-
-    public void startTimer() {
-        Log.i(TAG, "Starting timer");
-
-        //set a new Timer - if one is already running, cancel it to avoid two running at the same time
-        stoptimertask();
-        timer = new Timer();
-
-        //initialize the TimerTask's job
-        initializeTimerTask();
-
-        Log.i(TAG, "Scheduling...");
-        //schedule the timer, to wake up every 1 second
-        timer.schedule(timerTask, 1000, 1000); //
-    }
-
-    /**
-     * it sets the timer to print the counter every x seconds
-     */
-    public void initializeTimerTask() {
-        Log.i(TAG, "initialising TimerTask");
-        timerTask = new TimerTask() {
-            public void run() {
-                Log.i("in timer", "in timer ++++  " + (counter++));
-            }
-        };
-    }
-
-    /**
-     * not needed
-     */
-    public void stoptimertask() {
-        //stop the timer, if it's not already null
-        if (timer != null) {
-            timer.cancel();
-            timer = null;
-        }
-    }
 
     public static Service getmCurrentService() {
         return mCurrentService;

@@ -1,5 +1,5 @@
 package com.example.networkservice;
 
 public class Globals {
-    public static final String RESTART_INTENT = "com.example.restarter";
+    public static final String RESTART_INTENT = "com.example.restarter.RESTART_INTENT";
 }
