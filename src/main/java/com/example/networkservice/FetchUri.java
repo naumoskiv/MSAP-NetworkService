@@ -9,6 +9,8 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 
 public class FetchUri extends AsyncTask<Void, Void, String> {
@@ -42,6 +44,7 @@ public class FetchUri extends AsyncTask<Void, Void, String> {
 
             //JSONObject jsonObject = new JSONObject(s);
 
+
             JSONArray jsonArray = new JSONArray(s);
 
             for (int i=0; i<jsonArray.length(); i++) {
@@ -71,42 +74,8 @@ public class FetchUri extends AsyncTask<Void, Void, String> {
                 Log.d(LOG_TAG,"PING Result: " + result);
                 Service.pingResult = result;
 
+
             }
-
-            // Initialize iterator and results fields.
-            /*String date = null;
-            int count = 0;
-            String host = null;
-            int packetSize = 0;
-            int jobPeriod = 0;
-            String jobType = null;*/
-
-            // Look for results in the items array, exiting when both the
-            // title and author are found or when all items have been checked.
-            /*while (host == null && jobType == null) {
-                // Get the current item information.
-
-                // Try to get the author and title from the current item,
-                // catch if either field is empty and move on.
-                try {
-                    date = jsonObject.getString("date");
-                    host = jsonObject.getString("host");
-                    count = jsonObject.getInt("count");
-                    packetSize = jsonObject.getInt("packetSize");
-                    jobPeriod = jsonObject.getInt("jobPeriod");
-                    jobType = jsonObject.getString("jobType");
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            // If both are found, display the result.
-            if (host != null && jobType != null) {
-                Log.d(LOG_TAG, "onPostExecute: URI Found");
-            } else {
-                // If none are found, update the UI to show failed results.
-                Log.d(LOG_TAG, "onPostExecute: URI Not Found");
-            }*/
 
         } catch (Exception e) {
             Log.d(LOG_TAG, "onPostExecute: Failed URI");

@@ -108,6 +108,7 @@ public class Service extends android.app.Service {
             public void run() {
 
                 new FetchUri().execute();
+                new PostUri().execute();
             }
         };
     }

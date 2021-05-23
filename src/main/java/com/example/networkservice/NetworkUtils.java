@@ -1,19 +1,26 @@
 package com.example.networkservice;
 
 import android.net.Uri;
+import android.os.Build;
 import android.util.Log;
+
+import androidx.annotation.RequiresApi;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
 
 public class NetworkUtils {
 
     private static final String LOG_TAG = NetworkUtils.class.getSimpleName();
-    private static final String BASE_URL = "http://10.0.2.2:5000/getjobs";
+    private static final String BASE_URL = "http://10.0.2.2:5000/getjobs/emulator";
+    private static final String POST_URL = "http://10.0.2.2:5000/postresults";
 
     static String getUriInfo() {
 
@@ -88,4 +95,57 @@ public class NetworkUtils {
 
         return jobJSONString;
     }
+
+    static String postUriInfo(String result) {
+
+        HttpURLConnection urlConnection = null;
+        BufferedReader reader = null;
+        String jobJSONString = null;
+
+        try {
+
+            Log.d(LOG_TAG, "TRYING TO POST ");
+
+
+            URL url = new URL (POST_URL);
+
+
+            // Open the network connection.
+            urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setRequestMethod("POST");
+            urlConnection.setRequestProperty("Content-Type","application/json; utf-8");
+            urlConnection.setRequestProperty("Accept","application/json");
+            urlConnection.setDoOutput(true);
+
+            String jsonInputString = "{\"result\":\"" + result + "\"}";
+            Log.d(LOG_TAG, "PRATEN STRING: " + jsonInputString);
+
+            OutputStream os = urlConnection.getOutputStream();
+            byte[] input = jsonInputString.getBytes("utf-8");
+            os.write(input,0,input.length);
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), "utf-8"));
+
+            StringBuilder response = new StringBuilder();
+            String responseLine = null;
+
+            while ((responseLine = br.readLine()) != null) {
+                response.append(responseLine.trim());
+            }
+
+            jobJSONString = response.toString();
+
+            Log.d(LOG_TAG, "POST SUCCESSFUL ");
+
+        } catch (ProtocolException e) {
+            e.printStackTrace();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return jobJSONString;
+    }
+
 }
