@@ -19,7 +19,7 @@ public class FetchUri extends AsyncTask<Void, Void, String> {
     @Override
     protected String doInBackground(Void... voids) {
         try {
-            Thread.sleep(6000);
+            Thread.sleep(600000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
